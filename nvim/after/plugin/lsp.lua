@@ -1,7 +1,12 @@
 local lsp = require'lspconfig'
 local coq = require'coq'
-local lsp_sig = require'lsp_signature'
 local lsp_util = require'lspconfig.util'
+local virtualtypes = require'virtualtypes'
+
+require('coq_3p') {
+  { src = 'bc', short_name = 'MATHS', precision = 6 },
+  { src = 'figlet', short_name = 'BIG', trigger = '!big' }
+}
 
 local opts = { noremap=true, silent=true }
 vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, opts)
@@ -36,7 +41,6 @@ local on_attach = function(client, bufnr)
     toggle_key = '<C-h>'
   }
 
-  lsp_sig.on_attach(sig_cfg, bufnr)
 
   local bufopts = { noremap=true, silent=true, buffer=bufnr }
   vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
@@ -53,7 +57,9 @@ local on_attach = function(client, bufnr)
   vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
   vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
   vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
-  vim.keymap.set('n', '<space>f', vim.lsp.buf.formatting, bufopts)
+  -- vim.keymap.set('n', '<space>f', vim.lsp.buf.formatting, bufopts)
+
+  virtualtypes.on_attach(client, bufnr)
 end
 
 lsp.pyright.setup(coq.lsp_ensure_capabilities {
@@ -101,13 +107,12 @@ lsp.jdtls.setup(coq.lsp_ensure_capabilities {
 })
 
 lsp.ocamllsp.setup(coq.lsp_ensure_capabilities {
-  on_attach = function(client, bufnr)
-    require'virtualtypes'.on_attach(client, bufnr)
-    on_attach(client, bufnr)
-  end
+  on_attach = on_attach
 })
 
-lsp.clangd.setup(coq.lsp_ensure_capabilities())
+lsp.clangd.setup(coq.lsp_ensure_capabilities{
+  on_attach = on_attach
+})
 
 lsp.rescriptls.setup(coq.lsp_ensure_capabilities {
   cmd = {
